@@ -1,0 +1,476 @@
+--INNER JOIN 
+--1. Combime movies and directors tables
+
+select
+	movies.movie_id,
+	movies.movie_name,
+	movies.director_id,
+	directors.first_name
+from movies
+inner join directors
+on movies.director_id = directors.director_id;
+
+--2. Combine whole tables
+
+select *
+from movies
+inner join directors
+on movies.director_id = directors.director_id;
+
+--3. with Aliases 
+
+select *
+from movies mv
+inner join directors dr
+on mv.director_id = dr.director_id;
+
+--4. Filter some records
+
+select
+	m.movie_id,
+	m.movie_name,
+	m.movie_language,
+	m.director_id,
+	d.first_name
+from movies m
+inner join directors d
+on m.director_id = d.director_id
+where movie_language = 'English';
+
+--5. Use * instead of colunm name
+
+select m.*,d.*
+from movies m
+inner join directors d
+on m.director_id = d.director_id;
+
+--6. Connect two table with using clause
+
+select *
+from movies 
+inner join directors using (director_id);
+
+--7. Combime movies and movies_revenues tables
+
+select *
+from movies m
+inner join movies_revenues mr
+on m.movie_id = mr.movie_id;
+
+--8. Combime movies,directors and movies_revenues tables
+
+select *
+from movies m
+inner join movies_revenues mr using (movie_id)
+inner join directors d using (director_id);
+
+--9. Select movie name,director name and domestic revenue for all japanese movies
+
+select 
+	m.movie_name,
+	concat(d.first_name,' ',d.last_name) as director_name,
+	mr.revenues_domestic
+from movies m
+inner join movies_revenues mr using (movie_id)
+inner join directors d using (director_id)
+where movie_language = 'Japanese';
+
+--10.  Select movie name,director name for all English,Chinese and Japanese movies where domestic revenue is greater than 100
+
+select 
+	m.movie_name,
+	m.movie_language,
+	concat(d.first_name,' ',d.last_name) as director_name,
+	mr.revenues_domestic
+from movies m
+inner join movies_revenues mr using (movie_id)
+inner join directors d using (director_id)
+where movie_language in ('Japanese','English','Chinese') and revenues_domestic > 100
+order by movie_language;
+
+--11.  Select movie name,director name,movie language ,total revenue for all top 5 movies
+
+select
+	m.movie_name,
+	m.movie_language,
+	concat(d.first_name,' ',d.last_name) as director_name,
+	mr.revenues_domestic,
+	mr.revenues_international,
+	(mr.revenues_domestic + mr.revenues_international) as "Total_revenue"
+from movies m
+inner join movies_revenues mr using (movie_id)
+inner join directors d using (director_id)
+order by revenues_domestic + revenues_international desc nulls last
+limit 5;
+
+--12. What were the top 10 most profitable movies between year 2005 to 2008.Print the movie name,director name
+
+select
+	m.movie_name,
+	concat(d.first_name,' ',d.last_name) as director_name,
+	m.release_date,
+	mr.revenues_domestic,
+	mr.revenues_international,
+	(mr.revenues_domestic + mr.revenues_international) as "Total_revenue"
+from movies m
+inner join movies_revenues mr using (movie_id)
+inner join directors d using (director_id)
+where release_date between '2005-01-01' and '2008-12-31'
+order by revenues_domestic + revenues_international desc nulls last
+limit 10;
+
+--13. Create a table with int data type
+
+create table t1 (test int);
+
+--14. Create a table with varchar data type
+
+create table t2 (test varchar(10));
+
+--15. Join table
+
+select *
+from t1
+inner join t2 on t1.test = t2.test::int; 
+
+--16. Insert sample data into table
+
+insert into t1(test) values (1),(2);
+insert into t2(test) values ('aa'),('bb');
+
+select * from t1
+
+--LEFT JOIN
+--17. Create sample tables
+
+create table left_product(
+	product_id serial primary key,
+	product_name varchar(100)
+);
+
+create table right_product(
+	product_id serial primary key,
+	product_name varchar(100)
+);
+
+--18. Insert sample data into table
+
+insert into left_product (product_id,product_name) values 
+(1,'Computers'),
+(2,'Laptops'),
+(3,'Monitors'),
+(5,'Mics');
+
+insert into right_product (product_id,product_name) values 
+(1,'Computers'),
+(2,'Laptops'),
+(3,'Monitors'),
+(4,'Pen'),
+(7,'Papers');
+
+--19. View tables
+
+select * from left_product;
+
+select * from right_product;
+
+--20. Join table with left join
+
+select *
+from left_product
+left join right_product on left_product.product_id = right_product.product_id;
+
+select *
+from right_product
+left join left_product on left_product.product_id = right_product.product_id;
+
+--21.List all the movies with director first nam,last name and movie name 
+
+select
+	d.first_name,
+	d.last_name,
+	m.movie_name
+from directors d
+left join movies m on d.director_id = m.director_id;
+
+--22. Add records in directors table
+
+insert into directors (first_name,last_name,date_of_birth,nationality) VALUES
+('James','David','2010-01-01','American');
+
+select * from directors;
+
+--23. Add a where conditions,say get list of all English and Chinese movies only
+
+select 
+	d.first_name,
+	d.last_name,
+	m.movie_name,
+	m.movie_language
+from directors d
+left join movies m on d.director_id = m.director_id
+where  movie_language in ('English','Chinese')
+order by movie_language;
+
+--24. Count each movies for each directors
+
+select
+	concat(d.first_name,' ',d.last_name),
+	count(m.movie_name) as total_movies
+from directors d
+left join movies m on d.director_id = m.director_id
+group by concat(d.first_name,' ',d.last_name)
+order by count(movie_name);
+
+--25. Get all the movie with age certificate for all directors where nationality is American,Chinese,Japanese
+
+select *
+from directors d 
+left join movies m on d.director_id = m.director_id
+where d.nationality in ('American','Chinese','Japanese')
+order by nationality;
+
+--26. Get total revenues done ny each films for each directors
+
+select
+	d.first_name,
+	d.last_name,
+	sum(mr.revenues_domestic + mr.revenues_international) as "Total revenues"
+from directors d
+left join movies m on m.director_id = d.director_id
+left join movies_revenues mr on mr.movie_id = m.movie_id
+group by d.first_name, d.last_name
+having sum(mr.revenues_domestic + mr.revenues_international) > 0
+order by 3 desc nulls last;
+
+--RIGHT JOIN
+--27. Join table with right join
+
+select *
+from left_product
+right join right_product on left_product.product_id = right_product.product_id;
+
+select *
+from right_product
+right join left_product on left_product.product_id = right_product.product_id;
+
+--28.List all the movies with director first nam,last name and movie name 
+
+select
+	d.first_name,
+	d.last_name,
+	m.movie_name
+from directors d
+right join movies m on d.director_id = m.director_id;
+
+--29. Add a where conditions,say get list of all English and Chinese movies only
+
+select 
+	d.first_name,
+	d.last_name,
+	m.movie_name,
+	m.movie_language
+from directors d
+right join movies m on d.director_id = m.director_id
+where  movie_language in ('English','Chinese')
+order by movie_language;
+
+--30. Count each movies for each directors
+
+select
+	concat(d.first_name,' ',d.last_name),
+	count(m.movie_name) as total_movies
+from directors d
+right join movies m on d.director_id = m.director_id
+group by concat(d.first_name,' ',d.last_name)
+order by count(movie_name);
+
+--31. Count each movies for each directors
+
+select
+	concat(d.first_name,' ',d.last_name),
+	count(m.movie_name) as total_movies
+from directors d
+right join movies m on d.director_id = m.director_id
+group by concat(d.first_name,' ',d.last_name)
+order by count(movie_name);
+
+--32. Get all the movie with age certificate for all directors where nationality is American,Chinese,Japanese
+
+select *
+from directors d 
+right join movies m on d.director_id = m.director_id
+where d.nationality in ('American','Chinese','Japanese')
+order by nationality;
+
+--FULL JOIN
+--33. Join table with full join
+
+select *
+from left_product
+full join right_product on left_product.product_id = right_product.product_id;
+
+select *
+from right_product
+full join left_product on left_product.product_id = right_product.product_id;
+
+--34.List all the movies with director first nam,last name and movie name 
+
+select
+	d.first_name,
+	d.last_name,
+	m.movie_name
+from directors d
+full join movies m on d.director_id = m.director_id;
+
+--35. Add a where conditions,say get list of all English and Chinese movies only
+
+select 
+	d.first_name,
+	d.last_name,
+	m.movie_name,
+	m.movie_language
+from directors d
+full join movies m on d.director_id = m.director_id
+where  movie_language in ('English','Chinese')
+order by movie_language;
+
+--36. Count each movies for each directors
+
+select
+	concat(d.first_name,' ',d.last_name),
+	count(m.movie_name) as total_movies
+from directors d
+full join movies m on d.director_id = m.director_id
+group by concat(d.first_name,' ',d.last_name)
+order by count(movie_name);
+
+--37. Count each movies for each directors
+
+select
+	concat(d.first_name,' ',d.last_name),
+	count(m.movie_name) as total_movies
+from directors d
+full join movies m on d.director_id = m.director_id
+group by concat(d.first_name,' ',d.last_name)
+order by count(movie_name);
+
+--38. Get all the movie with age certificate for all directors where nationality is American,Chinese,Japanese
+
+select *
+from directors d 
+full join movies m on d.director_id = m.director_id
+where d.nationality in ('American','Chinese','Japanese')
+order by nationality;
+
+--JOIN
+--39. Join table with join
+
+select *
+from left_product
+join right_product on left_product.product_id = right_product.product_id;
+
+select *
+from right_product
+join left_product on left_product.product_id = right_product.product_id;
+
+--40.List all the movies with director first nam,last name and movie name 
+
+select
+	d.first_name,
+	d.last_name,
+	m.movie_name
+from directors d
+join movies m on d.director_id = m.director_id;
+
+--41. Add a where conditions,say get list of all English and Chinese movies only
+
+select 
+	d.first_name,
+	d.last_name,
+	m.movie_name,
+	m.movie_language
+from directors d
+join movies m on d.director_id = m.director_id
+where  movie_language in ('English','Chinese')
+order by movie_language;
+
+--42. Count each movies for each directors
+
+select
+	concat(d.first_name,' ',d.last_name),
+	count(m.movie_name) as total_movies
+from directors d
+join movies m on d.director_id = m.director_id
+group by concat(d.first_name,' ',d.last_name)
+order by count(movie_name);
+
+--43. Count each movies for each directors
+
+select
+	concat(d.first_name,' ',d.last_name),
+	count(m.movie_name) as total_movies
+from directors d
+join movies m on d.director_id = m.director_id
+group by concat(d.first_name,' ',d.last_name)
+order by count(movie_name);
+
+--44. Get all the movie with age certificate for all directors where nationality is American,Chinese,Japanese
+
+select *
+from directors d 
+join movies m on d.director_id = m.director_id
+where d.nationality in ('American','Chinese','Japanese')
+order by nationality;
+
+--SELF JOIN = INNER JOIN
+
+--CROSS JOIN
+--45. Join table with right join
+
+select *
+from left_product
+cross join right_product;
+
+select *
+from right_product
+cross join left_product;
+
+--46. Cross join actors with directors 
+
+select *
+from movies
+cross join directors;
+
+--NATURAL JOIN
+--47. Join table with NATURAL join
+
+select *
+from left_product
+natural join right_product;
+
+select *
+from left_product
+natural left join right_product;
+
+select *
+from left_product
+natural right join right_product;
+
+--48. Natural join actors with directors 
+
+select *
+from movies
+natural join directors;
+
+select *
+from movies
+natural inner join directors;
+
+select *
+from movies
+natural left join directors;
+
+select *
+from movies
+natural right join directors;
